@@ -129,11 +129,8 @@ class App extends Component {
         ref={"scrollView"}
       >
         <Image
-          style={{ height: 200 }}
-          source={{
-            uri:
-              "https://pbs.twimg.com/profile_images/447374371917922304/P4BzupWu_400x400.jpeg"
-          }}
+          style={{ height: 250, width: 'auto' }}
+          source={require('./assets/images/crowd.jpg')}
         />
 
         {this.state.comments.length ? (
