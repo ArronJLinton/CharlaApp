@@ -14,6 +14,7 @@ const sampleComments = Object.freeze(sampleCommentsRaw)
 
 import moment from 'moment'
 
+// GET COMMENTS FUNCTION
 export function getComments () {
   const c = [...sampleComments]
   return c.splice(c.length - 5)
@@ -123,6 +124,7 @@ export function edit (comments,  cmnt, text) {
   return comments
 }
 
+// SAVE COMMENT FUNCTION
 export function save (comments, text, parentCommentId, date, username) {
   //find last comment id
   let lastCommentId = 0;
@@ -151,7 +153,6 @@ export function save (comments, text, parentCommentId, date, username) {
     "body" : text,
     "likes": []
   }
-
   if (!parentCommentId) {
     comments.push(com);
 
@@ -175,7 +176,7 @@ export function save (comments, text, parentCommentId, date, username) {
       }
     }, this)
   }
-  console.log(3, comments);
+  // console.log(3, comments);
   return comments
 }
 

@@ -80,8 +80,10 @@ class App extends Component {
 
   extractCreatedTime(item) {
     try {
+      console.log("New Time: ", item.created_at);
       return item.created_at;
     } catch (e) {
+      console.log("Error With Time of Post")
       console.log(e);
     }
   }
@@ -180,15 +182,17 @@ class App extends Component {
                 animated: true
               });
             }}
+
             //what to do when user clicks submits edited comment
             saveAction={(text, parentCommentId) => {
-              let date = moment().format("YYYY-MM-DD H:mm:ss");
+              console.log('POSTING TO COMMENTS')
+              let date = moment().format("YYYY-MM-DD HH:mm:ss");
               let comments = this.actions.save(
                 this.state.comments,
                 text,
                 parentCommentId,
                 date,
-                "testUser"
+                "theKid"
               );
               this.setState({
                 comments: comments
@@ -238,6 +242,8 @@ class App extends Component {
                 comments: newComments
               });
               let self = this;
+
+              // HANDLES SCROLL ANIMATION
               setTimeout(function() {
                 if (direction == "up") {
                   self.refs.scrollView.scrollTo({
@@ -248,10 +254,11 @@ class App extends Component {
                 } else {
                   self.refs.scrollView.scrollTo({ x: 0, y: 0, animated: true });
                 }
-              }, 3000);
+              }, 1000);
+
             }}
           />
-        ) : null}
+        ) : <View style={styles.container}><Text>No Comments</Text></View>}
       </ScrollView>
     );
   }
