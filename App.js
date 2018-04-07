@@ -1,19 +1,22 @@
 "use strict"
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
-
 // create a component
 import styles from "./styles";
 import Comments from "react-native-comments";
 import * as commentActions from "./ExampleActions";
 import moment from "moment";
+import database from "./firebase_db";
+
 
 class App extends Component {
   constructor(props) {
+
     super(props);
     this.props = props;
     this.actions = commentActions;
     this.state = {
+      preload: [],
       comments: [],
       loadingComments: true,
       lastCommentUpdate: null,
@@ -23,18 +26,89 @@ class App extends Component {
     };
 
     this.scrollIndex = 0;
+
+    
+    // database.ref("comments/").on("child_added", (snapshot) => {
+    //   let comments = [];
+    //   let data = snapshot.val();
+    //   comments = [...comments, data]
+    //   console.log(comments.length)
+    //   // console.log(data)
+    //   // console.log('DATA: ', typeof snapshot)
+    //   // console.log(this.state.comments )
+    //   // let comments = JSON.stringify(snapshot.val(), null, 2)
+    //   // console.log(comments);
+    //   // let newComments = JSON.parse(comments)
+    //   // console.log(newComments)
+
+    //   // newComments.map((i, com) => {
+    //   //   console.log('===================')
+    //   //   console.log(com)
+    //   // })
+    //   this.setState({
+    //     comments:[...this.state.comments, data]
+    //   })
+    // })
+    database.ref("comments/").on("value", (snapshot) => {
+      let data = snapshot.val();
+      // console.log(data)
+      const comments = [];
+      snapshot.forEach((child) => {
+        // console.log(child.val())
+        comments.push(child.val());
+      });
+      console.log('FIREBASE:', comments)
+      console.log('======================')
+      this.setState({
+        comments: comments,
+        loadingComments: false,
+        lastCommentUpdate: new Date().getTime()
+      })
+    });
+
+
   }
 
   static navigatorStyle = {};
 
   componentDidMount() {
-    const c = this.actions.getComments();
-    this.setState({
-      comments: c,
-      loadingComments: false,
-      lastCommentUpdate: new Date().getTime()
+    //  await this.downloadFromFirebase();
+      // this.updateComments();
+    // //  console.log('PRELOAD COMMENTS: ', this.state.preload)
+     const c = this.actions.getComments();
+     console.log('SAMPLE: ', c[0])
+     console.log('===================')
+    // console.log("COMPONENT MOUNTED: ", c)
+    // this.setState({
+    //   comments: c,
+    //   loadingComments: false,
+    //   lastCommentUpdate: new Date().getTime()
+    // });
+
+  }
+
+  downloadFromFirebase(){
+     database.ref("comments/").on("value", (snapshot) => {
+      let data = snapshot.val();
+      // console.log(data)
+      const comments = [];
+      snapshot.forEach((child) => {
+        // console.log(child.val())
+        comments.push(child.val());
+      });
+      console.log(comments)
+   
+      this.setState({
+        preload: [...this.state.comments, comments]
+      })
     });
   }
+
+  // updateComments(){
+  //   console.log("COMMENTS: ", this.state.preload)
+  // }
+
+
 
   extractUsername(c) {
     try {
@@ -97,7 +171,10 @@ class App extends Component {
   }
 
   likesExtractor(item) {
+        // console.log("LIKES ITEM: ", item[0].likes);
+
     return item.likes.map(like => {
+        
       return {
         image: like.image,
         name: like.username,
@@ -113,16 +190,19 @@ class App extends Component {
     return item.parentId !== null;
   }
 
-  render() {
+ render() {
     const review = this.state.review;
     const data = this.state.comments;
-
+    console.log("RENDER DATA: ", data);
     return (
       /*
       * They should add scroll to end on save action
       *They should not update comments if there are modals opened
       *
       * */
+     <View>
+      
+      
       <ScrollView
         style={styles.container}
         onScroll={event => {
@@ -194,9 +274,9 @@ class App extends Component {
                 date,
                 "theKid"
               );
-              this.setState({
-                comments: comments
-              });
+              // this.setState({
+              //   comments: comments
+              // });
 
               if (!parentCommentId) {
                 this.refs.scrollView.scrollToEnd();
@@ -260,6 +340,7 @@ class App extends Component {
           />
         ) : <View style={styles.container}><Text>No Comments</Text></View>}
       </ScrollView>
+      </View>
     );
   }
 }

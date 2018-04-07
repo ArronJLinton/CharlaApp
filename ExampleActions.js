@@ -4,6 +4,8 @@
 
 const sampleCommentsRaw = require('./sampleComments')
 
+import database from "./firebase_db";
+
 sampleCommentsRaw.forEach(c => {
   if (c.children) {
     c.childrenCount = c.children.length
@@ -14,9 +16,25 @@ const sampleComments = Object.freeze(sampleCommentsRaw)
 
 import moment from 'moment'
 
-// GET COMMENTS FUNCTION
+// ============== GET COMMENTS FUNCTION ============== //
 export function getComments () {
+  let comments;
+  // firebase function handler to GET messages
+  // database.ref("comments/").on("value", function(snapshot) {
+  //   //  console.log("DATA ON LOAD: ", snapshot);
+  //   //  comments = snapshot;
+  //   // comments = [...comments, snapshot];
+  //  return comments = snapshot.val();
+  
+  //  });
+
+  //  console.log(comments)
+  //  return true;
+  //   const c = comments;
+  //   console.log("DATA: ", c);
+  //  return c.splice(c.length - 5);
   const c = [...sampleComments]
+
   return c.splice(c.length - 5)
 
 }
@@ -124,8 +142,10 @@ export function edit (comments,  cmnt, text) {
   return comments
 }
 
-// SAVE COMMENT FUNCTION
-export function save (comments, text, parentCommentId, date, username) {
+// ============ SAVE COMMENT FUNCTION ============ //
+export async function save (comments, text, parentCommentId, date, username) {
+
+
   //find last comment id
   let lastCommentId = 0;
   sampleComments.forEach(c=>{
@@ -143,7 +163,7 @@ export function save (comments, text, parentCommentId, date, username) {
 
 
   let com = {
-    "parentId": null,
+    "parentId": parentCommentId,
     "commentId": lastCommentId+1,
     "created_at": date,
     "updated_at": date,
@@ -151,10 +171,22 @@ export function save (comments, text, parentCommentId, date, username) {
     "reported": false,
     "email": username,
     "body" : text,
-    "likes": []
+    "likes": [0]
   }
+
+
   if (!parentCommentId) {
-    comments.push(com);
+    // comments.push(com);
+    // console.log('POSTING TO FIREBASE')
+     database.ref("comments/")
+        .push(com);
+
+    // await database.ref("comments/").on("value", function(snapshot) {
+    //     console.log("DATA: ", snapshot);
+    //     comments = snapshot
+    //     return comments
+    //   });
+
 
   } else {
 
@@ -174,11 +206,13 @@ export function save (comments, text, parentCommentId, date, username) {
         }
         return true
       }
+      // why do we bind "this" to a function ?
     }, this)
   }
+
   // console.log(3, comments);
-  return comments
-}
+  // return comments;
+} // END OF POST COMMENT FUNCTION 
 
 export function report (comments, cmnt) {
 
