@@ -1,349 +1,216 @@
-"use strict"
-import React, { Component } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
-// create a component
-import styles from "./styles";
-import Comments from "react-native-comments";
-import * as commentActions from "./ExampleActions";
-import moment from "moment";
-import database from "./firebase_db";
+import React, { Component } from "react";
+import {
+  Animated,
+  Dimensions,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
+// Native base, for the tabs
+import {
+  Body,
+  Header,
+  List,
+  ListItem as Item,
+  ScrollableTab,
+  Tab,
+  TabHeading,
+  Tabs,
+  Title
+} from "native-base";
 
+// React native linear gradient, to improve the legibility of the header when it’s positioned in front of the image
+import LinearGradient from "react-native-linear-gradient";
+import ChatRoom from './ChatRoom'
 
-class App extends Component {
-  constructor(props) {
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const IMAGE_HEIGHT = 250;
+const HEADER_HEIGHT = Platform.OS === "ios" ? 64 : 50;
+const SCROLL_HEIGHT = IMAGE_HEIGHT - HEADER_HEIGHT;
+const THEME_COLOR = "rgba(85,186,255, 1)";
+const FADED_THEME_COLOR = "rgba(85,186,255, 0.8)";
 
-    super(props);
-    this.props = props;
-    this.actions = commentActions;
-    this.state = {
-      preload: [],
-      comments: [],
-      loadingComments: true,
-      lastCommentUpdate: null,
-      review: props.review ? props.review : null,
-      login: null,
-      id: props.id
-    };
+export default class App extends Component {
+  nScroll = new Animated.Value(0);
+  scroll = new Animated.Value(0);
+  textColor = this.scroll.interpolate({
+    inputRange: [0, SCROLL_HEIGHT / 5, SCROLL_HEIGHT],
+    outputRange: [THEME_COLOR, FADED_THEME_COLOR, "white"],
+    extrapolate: "clamp"
+  });
+  tabBg = this.scroll.interpolate({
+    inputRange: [0, SCROLL_HEIGHT],
+    outputRange: ["white", THEME_COLOR],
+    extrapolate: "clamp"
+  });
+  tabY = this.nScroll.interpolate({
+    inputRange: [0, SCROLL_HEIGHT, SCROLL_HEIGHT + 1],
+    outputRange: [0, 0, 1]
+  });
+  headerBg = this.scroll.interpolate({
+    inputRange: [0, SCROLL_HEIGHT, SCROLL_HEIGHT + 1],
+    outputRange: ["transparent", "transparent", THEME_COLOR],
+    extrapolate: "clamp"
+  });
+  imgScale = this.nScroll.interpolate({
+    inputRange: [-25, 0],
+    outputRange: [1.1, 1],
+    extrapolateRight: "clamp"
+  });
+  imgOpacity = this.nScroll.interpolate({
+    inputRange: [0, SCROLL_HEIGHT],
+    outputRange: [1, 0]
+  });
 
-    this.scrollIndex = 0;
-
-    
-    // database.ref("comments/").on("child_added", (snapshot) => {
-    //   let comments = [];
-    //   let data = snapshot.val();
-    //   comments = [...comments, data]
-    //   console.log(comments.length)
-    //   // console.log(data)
-    //   // console.log('DATA: ', typeof snapshot)
-    //   // console.log(this.state.comments )
-    //   // let comments = JSON.stringify(snapshot.val(), null, 2)
-    //   // console.log(comments);
-    //   // let newComments = JSON.parse(comments)
-    //   // console.log(newComments)
-
-    //   // newComments.map((i, com) => {
-    //   //   console.log('===================')
-    //   //   console.log(com)
-    //   // })
-    //   this.setState({
-    //     comments:[...this.state.comments, data]
-    //   })
-    // })
-    database.ref("comments/").on("value", (snapshot) => {
-      let data = snapshot.val();
-      // console.log(data)
-      const comments = [];
-      snapshot.forEach((child) => {
-        // console.log(child.val())
-        comments.push(child.val());
-      });
-      console.log('FIREBASE:', comments)
-      console.log('======================')
-      this.setState({
-        comments: comments,
-        loadingComments: false,
-        lastCommentUpdate: new Date().getTime()
-      })
-    });
-
-
-  }
-
-  static navigatorStyle = {};
-
-  componentDidMount() {
-    //  await this.downloadFromFirebase();
-      // this.updateComments();
-    // //  console.log('PRELOAD COMMENTS: ', this.state.preload)
-     const c = this.actions.getComments();
-     console.log('SAMPLE: ', c[0])
-     console.log('===================')
-    // console.log("COMPONENT MOUNTED: ", c)
-    // this.setState({
-    //   comments: c,
-    //   loadingComments: false,
-    //   lastCommentUpdate: new Date().getTime()
-    // });
-
-  }
-
-  downloadFromFirebase(){
-     database.ref("comments/").on("value", (snapshot) => {
-      let data = snapshot.val();
-      // console.log(data)
-      const comments = [];
-      snapshot.forEach((child) => {
-        // console.log(child.val())
-        comments.push(child.val());
-      });
-      console.log(comments)
-   
-      this.setState({
-        preload: [...this.state.comments, comments]
-      })
-    });
-  }
-
-  // updateComments(){
-  //   console.log("COMMENTS: ", this.state.preload)
-  // }
-
-
-
-  extractUsername(c) {
-    try {
-      return c.email !== "" ? c.email : null;
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  extractBody(c) {
-    try {
-      return c.body && c.body !== "" ? c.body : null;
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  extractImage(c) {
-    try {
-      return c.image_id && c.user.image_id !== ""
-        ? c.user.image_id
-        : "https://ireview.live/img/no-user.png";
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  extractChildrenCount(c) {
-    try {
-      return c.childrenCount || 0;
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  extractEditTime(item) {
-    try {
-      return item.updated_at;
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  extractCreatedTime(item) {
-    try {
-      console.log("New Time: ", item.created_at);
-      return item.created_at;
-    } catch (e) {
-      console.log("Error With Time of Post")
-      console.log(e);
-    }
-  }
-
-  likeExtractor(item) {
-    return item.liked;
-  }
-
-  reportedExtractor(item) {
-    return item.reported;
-  }
-
-  likesExtractor(item) {
-        // console.log("LIKES ITEM: ", item[0].likes);
-
-    return item.likes.map(like => {
-        
-      return {
-        image: like.image,
-        name: like.username,
-        user_id: like.user_id,
-        tap: username => {
-          console.log("Taped: " + username);
-        }
-      };
-    });
-  }
-
-  isCommentChild(item) {
-    return item.parentId !== null;
-  }
-
- render() {
-    const review = this.state.review;
-    const data = this.state.comments;
-    console.log("RENDER DATA: ", data);
-    return (
-      /*
-      * They should add scroll to end on save action
-      *They should not update comments if there are modals opened
-      *
-      * */
-     <View>
-      
-      
-      <ScrollView
-        style={styles.container}
-        onScroll={event => {
-          this.scrollIndex = event.nativeEvent.contentOffset.y;
+  tabContent = (x, i) => (
+    <View style={{ height: this.state.height }}>
+      <List
+        onLayout={({ nativeEvent: { layout: { height } } }) => {
+          this.heights[i] = height;
+          if (this.state.activeTab === i) this.setState({ height });
         }}
-        ref={"scrollView"}
       >
-        <Image
-          style={{ height: 250, width: 'auto' }}
-          source={require('./assets/images/crowd.jpg')}
-        />
+        {new Array(x).fill(null).map((_, i) => (
+          <Item key={i}>
+            <Text>Item {i}</Text>
+          </Item>
+        ))}
+      </List>
+    </View>
+  );
 
-        {this.state.comments.length ? (
-          <Comments
-            data={data}
-            //To compare is user the owner
-            viewingUserName={"testUser"}
-            //how many comments to display on init
-            initialDisplayCount={5}
-            //How many minutes to pass before locking for editing
-            editMinuteLimit={0}
-            //What happens when user taps on username or photo
-            usernameTapAction={username => {
-              console.log("Taped user: " + username);
-            }}
-            //Where can we find the children within item.
-            //Children must be prepared before for pagination sake
-            childPropName={"children"}
-            isChild={item => this.isCommentChild(item)}
-            //We use this for key prop on flat list (i.e. its comment_id)
-            keyExtractor={item => item.commentId}
-            //Extract the key indicating comments parent
-            parentIdExtractor={item => item.parentId}
-            //what prop holds the comment owners username
-            usernameExtractor={item => this.extractUsername(item)}
-            //when was the comment last time edited
-            editTimeExtractor={item => this.extractEditTime(item)}
-            //When was the comment created
-            createdTimeExtractor={item => this.extractCreatedTime(item)}
-            //where is the body
-            bodyExtractor={item => this.extractBody(item)}
-            //where is the user image
-            imageExtractor={item => this.extractImage(item)}
-            //Where to look to see if user liked comment
-            likeExtractor={item => this.likeExtractor(item)}
-            //Where to look to see if user reported comment
-            reportedExtractor={item => this.reportedExtractor(item)}
-            //Where to find array with user likes
-            likesExtractor={item => this.likesExtractor(item)}
-            //Where to get nr of replies
-            childrenCountExtractor={item => this.extractChildrenCount(item)}
-            //what to do when user clicks reply. Usually its header height + position (b/c scroll list heights are relative)
-            replyAction={offset => {
-              this.refs.scrollView.scrollTo({
-                x: null,
-                y: this.scrollIndex + offset - 300,
-                animated: true
-              });
-            }}
+  heights = [500, 500];
+  state = {
+    activeTab: 0,
+    height: 500
+  };
 
-            //what to do when user clicks submits edited comment
-            saveAction={(text, parentCommentId) => {
-              console.log('POSTING TO COMMENTS')
-              let date = moment().format("YYYY-MM-DD HH:mm:ss");
-              let comments = this.actions.save(
-                this.state.comments,
-                text,
-                parentCommentId,
-                date,
-                "theKid"
-              );
-              // this.setState({
-              //   comments: comments
-              // });
+  constructor(props) {
+    super(props);
+    this.nScroll.addListener(
+      Animated.event([{ value: this.scroll }], { useNativeDriver: false })
+    );
+  }
 
-              if (!parentCommentId) {
-                this.refs.scrollView.scrollToEnd();
-              }
-            }}
-            //what to do when user clicks submits edited comment
-            editAction={(text, comment) => {
-              let comments = this.actions.edit(
-                this.state.comments,
-                comment,
-                text
-              );
-              this.setState({
-                comments: comments
-              });
-            }}
-            //what to do when user clicks report submit
-            reportAction={comment => {
-              let comments = this.actions.report(this.state.comments, comment);
-              this.setState({
-                comments: comments
-              });
-            }}
-            //what to do when user clicks like
-            likeAction={comment => {
-              let comments = this.actions.like(this.state.comments, comment);
-              this.setState({
-                comments: comments
-              });
-            }}
-            //Must return promise
-            paginateAction={(from_comment_id, direction, parent_comment_id) => {
-              //Must return array of new comments after pagination
+  render() {
+    return (
+      <View>
+        <Animated.View
+          style={{
+            position: "absolute",
+            width: "100%",
+            backgroundColor: this.headerBg,
+            zIndex: 1
+          }}
+        >
+          <Header style={{ backgroundColor: "transparent" }} hasTabs>
+            <Body>
+              <Title>
+                <Animated.Text
+                  style={{ color: this.textColor, fontWeight: "bold" }}
+                >
+                  Tab Parallax
+                </Animated.Text>
+              </Title>
+            </Body>
+          </Header>
+        </Animated.View>
 
-              let newComments = this.actions.paginateComments(
-                this.state.comments,
-                from_comment_id,
-                direction,
-                parent_comment_id
-              );
-
-              this.setState({
-                comments: newComments
-              });
-              let self = this;
-
-              // HANDLES SCROLL ANIMATION
-              setTimeout(function() {
-                if (direction == "up") {
-                  self.refs.scrollView.scrollTo({
-                    x: 0,
-                    y: 500,
-                    animated: true
-                  });
-                } else {
-                  self.refs.scrollView.scrollTo({ x: 0, y: 0, animated: true });
-                }
-              }, 1000);
-
+        <Animated.ScrollView
+          scrollEventThrottle={5}
+          showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: this.nScroll } } }],
+            { useNativeDriver: true }
+          )}
+          style={{ zIndex: 0 }}
+        >
+          <Animated.View
+            style={{
+              transform: [
+                { translateY: Animated.multiply(this.nScroll, 0.65) },
+                { scale: this.imgScale }
+              ],
+              backgroundColor: THEME_COLOR
             }}
-          />
-        ) : <View style={styles.container}><Text>No Comments</Text></View>}
-      </ScrollView>
+          >
+            {/* Animate the image to emulate a parallax effect.*/}
+            <Animated.Image
+              source={require('./assets/images/crowd.jpg')}
+              style={{
+                height: IMAGE_HEIGHT,
+                width: "100%",
+                opacity: this.imgOpacity
+              }}
+            >
+
+            </Animated.Image>
+          </Animated.View>
+
+          <Tabs
+            prerenderingSiblingsNumber={3}
+            onChangeTab={({ i }) => {
+              this.setState({ height: this.heights[i], activeTab: i });
+            }}
+            renderTabBar={props => (
+              <Animated.View
+                style={{
+                  transform: [{ translateY: this.tabY }],
+                  zIndex: 1,
+                  width: "100%",
+                  backgroundColor: "white"
+                }}
+              >
+                <ScrollableTab
+                  {...props}
+                  renderTab={(name, page, active, onPress, onLayout) => (
+                    <TouchableOpacity
+                      key={page}
+                      onPress={() => onPress(page)}
+                      onLayout={onLayout}
+                      activeOpacity={0.4}
+                    >
+                      <Animated.View
+                        style={{
+                          flex: 1,
+                          height: 100,
+                          backgroundColor: this.tabBg
+                        }}
+                      >
+                        <TabHeading
+                          scrollable
+                          style={{
+                            backgroundColor: "transparent",
+                            width: SCREEN_WIDTH / 2
+                          }}
+                          active={active}
+                        >
+                          <Animated.Text
+                            style={{
+                              fontWeight: active ? "bold" : "normal",
+                              color: this.textColor,
+                              fontSize: 14
+                            }}
+                          >
+                            {name}
+                          </Animated.Text>
+                        </TabHeading>
+                      </Animated.View>
+                    </TouchableOpacity>
+                  )}
+                  underlineStyle={{ backgroundColor: this.textColor }}
+                />
+              </Animated.View>
+            )}
+          >
+            <Tab heading="Tab 1">
+              <ChatRoom />
+            </Tab>
+            <Tab heading="Tab 2">{this.tabContent(15, 1)}</Tab>
+          </Tabs>
+        </Animated.ScrollView>
       </View>
     );
   }
 }
-
-
-export default App;

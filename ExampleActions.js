@@ -171,7 +171,7 @@ export async function save (comments, text, parentCommentId, date, username) {
     "reported": false,
     "email": username,
     "body" : text,
-    "likes": [0]
+    // "likes": null
   }
 
 
