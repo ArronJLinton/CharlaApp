@@ -168,9 +168,9 @@ export default class App extends Component {
             </Animated.Image>
           </Animated.View>
 
-          
+          <Animated.View>
           <ChatRoom scroll={this.chatScroll} height={this.heights} updateHeight={this.updateHeight.bind(this)} />
-  
+          </Animated.View>
         </Animated.ScrollView>
       </View>
     );
