@@ -22,7 +22,6 @@ import {
 
 // React native linear gradient, to improve the legibility of the header when it’s positioned in front of the image
 import LinearGradient from "react-native-linear-gradient";
-import ChatRoom from './ChatRoom'
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_HEIGHT = 250;
@@ -53,11 +52,15 @@ export default class App extends Component {
     outputRange: ["transparent", "transparent", THEME_COLOR],
     extrapolate: "clamp"
   });
+  // When the user scrolls up, the image should increase in size to cover up any white space that would’ve shown otherwise.
+  // This is only applicable to iOS, since on android the user cannot scroll above the top of the scrollview, but it’s a nice touch to add.
+  // It is necessary to specify that the extrapolateRight method is “clamp”, so that when the user scrolls down, the image does not shrink.
   imgScale = this.nScroll.interpolate({
     inputRange: [-25, 0],
     outputRange: [1.1, 1],
     extrapolateRight: "clamp"
   });
+
   imgOpacity = this.nScroll.interpolate({
     inputRange: [0, SCROLL_HEIGHT],
     outputRange: [1, 0]
@@ -91,26 +94,6 @@ export default class App extends Component {
     this.nScroll.addListener(
       Animated.event([{ value: this.scroll }], { useNativeDriver: false })
     );
-  }
-
-  chatScroll(){
-    console.log("WORKING CHAT SCROLL")
-    Animated.event(
-      [
-        {
-          nativeEvent: {
-            contentOffset: {
-              y: this.nScroll
-            }
-          }
-        }
-      ],
-      { useNativeDriver: true }
-    );
-  }
-
-  updateHeight(height){
-    if (this.state.activeTab === 1) this.setState({ height });
   }
 
   render() {
@@ -157,20 +140,88 @@ export default class App extends Component {
           >
             {/* Animate the image to emulate a parallax effect.*/}
             <Animated.Image
-              source={require('./assets/images/crowd.jpg')}
+              source={{
+                uri:
+                  "https://upload.wikimedia.org/wikipedia/commons/c/c5/Moraine_Lake_17092005.jpg"
+              }}
               style={{
                 height: IMAGE_HEIGHT,
                 width: "100%",
                 opacity: this.imgOpacity
               }}
             >
-
+              {/*gradient*/}
+              <LinearGradient
+                colors={[
+                  "rgba(255,255,255,0.9)",
+                  "rgba(255,255,255,0.35)",
+                  "rgba(255,255,255,0)"
+                ]}
+                locations={[0, 0.25, 1]}
+                style={{ position: "absolute", height: "100%", width: "100%" }}
+              />
             </Animated.Image>
           </Animated.View>
 
-          
-          <ChatRoom scroll={this.chatScroll} height={this.heights} updateHeight={this.updateHeight.bind(this)} />
-  
+          <Tabs
+            prerenderingSiblingsNumber={3}
+            onChangeTab={({ i }) => {
+              this.setState({ height: this.heights[i], activeTab: i });
+            }}
+            renderTabBar={props => (
+              <Animated.View
+                style={{
+                  transform: [{ translateY: this.tabY }],
+                  zIndex: 1,
+                  width: "100%",
+                  backgroundColor: "white"
+                }}
+              >
+                <ScrollableTab
+                  {...props}
+                  renderTab={(name, page, active, onPress, onLayout) => (
+                    <TouchableOpacity
+                      key={page}
+                      onPress={() => onPress(page)}
+                      onLayout={onLayout}
+                      activeOpacity={0.4}
+                    >
+                      <Animated.View
+                        style={{
+                          flex: 1,
+                          height: 100,
+                          backgroundColor: this.tabBg
+                        }}
+                      >
+                        <TabHeading
+                          scrollable
+                          style={{
+                            backgroundColor: "transparent",
+                            width: SCREEN_WIDTH / 2
+                          }}
+                          active={active}
+                        >
+                          <Animated.Text
+                            style={{
+                              fontWeight: active ? "bold" : "normal",
+                              color: this.textColor,
+                              fontSize: 14
+                            }}
+                          >
+                            {name}
+                          </Animated.Text>
+                        </TabHeading>
+                      </Animated.View>
+                    </TouchableOpacity>
+                  )}
+                  underlineStyle={{ backgroundColor: this.textColor }}
+                />
+              </Animated.View>
+            )}
+          >
+            <Tab heading="Tab 1">{this.tabContent(30, 0)}</Tab>
+            <Tab heading="Tab 2">{this.tabContent(15, 1)}</Tab>
+          </Tabs>
         </Animated.ScrollView>
       </View>
     );

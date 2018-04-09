@@ -56,8 +56,8 @@ class ChatRoom extends Component {
         // console.log(child.val())
         comments.push(child.val());
       });
-      // console.log("FIREBASE:", comments);
-      // console.log("======================");
+      console.log("FIREBASE:", comments);
+      console.log("======================");
       this.setState({
         comments: comments,
         loadingComments: false,
@@ -69,7 +69,6 @@ class ChatRoom extends Component {
   static navigatorStyle = {};
 
   componentDidMount() {
-    // console.log(this.props)
     //  await this.downloadFromFirebase();
     // this.updateComments();
     // //  console.log('PRELOAD COMMENTS: ', this.state.preload)
@@ -165,14 +164,11 @@ class ChatRoom extends Component {
   isCommentChild(item) {
     return item.parentId !== null;
   }
-    //  {
-    //         this.scrollIndex = event.nativeEvent.contentOffset.y;
-    //       }
 
   render() {
     const review = this.state.review;
     const data = this.state.comments;
-    // console.log("RENDER DATA: ", data);
+    console.log("RENDER DATA: ", data);
     return (
       /*
       * They should add scroll to end on save action
@@ -181,20 +177,13 @@ class ChatRoom extends Component {
       * */
       <View>
       
-       <Animated.ScrollView
-          style={{backgroundColor: 'white'}}
-          // scrollEventThrottle={5}
-          // showsVerticalScrollIndicator={false}
-          // onScroll={event => {this.props.scroll}}
-          // onLayout={({ nativeEvent: { layout: { height } } }) => {
-          //   this.props.height[1] = height;
-          //   console.log('HEIGHT', height)
-          //   this.props.updateHeight(height);
-            
-          // }}
-         
+      {/*  <ScrollView
+          style={styles.container}
+          onScroll={event => {
+            this.scrollIndex = event.nativeEvent.contentOffset.y;
+          }}
           ref={"scrollView"}
-        >
+        >*/}
           {this.state.comments.length ? (
             <Comments
               data={data}
@@ -332,7 +321,7 @@ class ChatRoom extends Component {
               <Text>No Comments</Text>
             </View>
           )}
-        </Animated.ScrollView>
+        {/*</ScrollView>*/}
       </View>
     );
   }

@@ -168,9 +168,67 @@ export default class App extends Component {
             </Animated.Image>
           </Animated.View>
 
-          
-          <ChatRoom scroll={this.chatScroll} height={this.heights} updateHeight={this.updateHeight.bind(this)} />
-  
+          <Tabs
+            prerenderingSiblingsNumber={3}
+            onChangeTab={({ i }) => {
+              this.setState({ height: this.heights[i], activeTab: i });
+            }}
+            renderTabBar={props => (
+              <Animated.View
+                style={{
+                  transform: [{ translateY: this.tabY }],
+                  zIndex: 1,
+                  width: "100%",
+                  backgroundColor: "white"
+                }}
+              >
+                <ScrollableTab
+                  {...props}
+                  renderTab={(name, page, active, onPress, onLayout) => (
+                    <TouchableOpacity
+                      key={page}
+                      onPress={() => onPress(page)}
+                      onLayout={onLayout}
+                      activeOpacity={0.4}
+                    >
+                      <Animated.View
+                        style={{
+                          flex: 1,
+                          height: 100,
+                          backgroundColor: this.tabBg
+                        }}
+                      >
+                        <TabHeading
+                          scrollable
+                          style={{
+                            backgroundColor: "transparent",
+                            width: SCREEN_WIDTH / 2
+                          }}
+                          active={active}
+                        >
+                          <Animated.Text
+                            style={{
+                              fontWeight: active ? "bold" : "normal",
+                              color: this.textColor,
+                              fontSize: 14
+                            }}
+                          >
+                            {name}
+                          </Animated.Text>
+                        </TabHeading>
+                      </Animated.View>
+                    </TouchableOpacity>
+                  )}
+                  underlineStyle={{ backgroundColor: this.textColor }}
+                />
+              </Animated.View>
+            )}
+          >
+            <Tab heading="ChatRoom">
+                <ChatRoom scroll={this.chatScroll} height={this.heights} updateHeight={this.updateHeight.bind(this)} />
+            </Tab>
+            <Tab heading="News">{this.tabContent(15, 1)}</Tab>
+          </Tabs>
         </Animated.ScrollView>
       </View>
     );
