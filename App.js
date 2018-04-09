@@ -130,7 +130,7 @@ export default class App extends Component {
                 <Animated.Text
                   style={{ color: this.textColor, fontWeight: "bold" }}
                 >
-                  Tab Parallax
+                  SCORE
                 </Animated.Text>
               </Title>
             </Body>
