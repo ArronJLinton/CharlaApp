@@ -8,7 +8,8 @@ import {
   Image,
   Animated,
   TouchableOpacity,
-  Platform
+  Platform,
+  ActivityIndicator
 } from "react-native";
 
 import {
@@ -328,8 +329,8 @@ class ChatRoom extends Component {
               }}
             />
           ) : (
-            <View style={styles.container}>
-              <Text>No Comments</Text>
+            <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+              <ActivityIndicator style={{flex: 1, marginTop: 200}} size="large" color="#0000ff" />
             </View>
           )}
         </Animated.ScrollView>
